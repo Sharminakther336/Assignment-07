@@ -1,21 +1,28 @@
+
 import Navbar from "@/components/navbar/Navbar";
+import Banner from "@/components/Banner";
 
 export default function Home() {
   return (
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-gray-50 px-4 py-10 sm:px-8 lg:px-16">
-        <div className="mx-auto max-w-7xl">
-          <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-            BazarDor
-          </h1>
+      <main className="min-h-screen bg-[#f0f5ef]">
+        <Banner />
 
-          <p className="mt-3 text-base text-gray-600 sm:text-lg">
-            Fresh products at the right price.
+        <section
+          id="products"
+          className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8"
+        >
+          <h2 className="text-xl font-bold text-[#202a22] sm:text-2xl">
+            আজকের বাজারের পণ্য
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            পণ্যের তালিকা এখানে যোগ করা হবে।
           </p>
-        </div>
+        </section>
       </main>
     </>
   );
 }
+
