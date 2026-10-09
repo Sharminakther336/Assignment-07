@@ -25,80 +25,41 @@ const categories = [
 type Product = {
   id?: string | number;
   slug?: string;
-  name?: string;
   nameBn?: string;
   name_bn?: string;
+  name?: string;
   title?: string;
+  category?: string | { slug?: string; id?: string };
+  categoryIcon?: string;
+  image?: string;
+  emoji?: string;
+  icon?: string;
+  today?: number | string;
+  yesterday?: number | string;
+  lastWeek?: number | string;
+  lastMonth?: number | string;
   price?: number | string;
   currentPrice?: number | string;
   current_price?: number | string;
   todayPrice?: number | string;
   today_price?: number | string;
-  priceChange?: number | string;
-  price_change?: number | string;
-  change?: number | string;
-  changePercent?: number | string;
-  change_percent?: number | string;
   unit?: string;
   unitBn?: string;
   unit_bn?: string;
-  emoji?: string;
-  icon?: string;
-  category?: string | { slug?: string; id?: string };
+  change?: {
+    dir?: "up" | "down" | "flat";
+    pct?: number | string;
+  };
+  changePercent?: number | string;
+  change_percent?: number | string;
+  priceChange?: number | string;
+  price_change?: number | string;
 };
 
 function bn(value: number) {
   return new Intl.NumberFormat("bn-BD", {
     maximumFractionDigits: 2,
   }).format(value);
-}
-
-function getName(p: Product) {
-  return p.nameBn ?? p.name_bn ?? p.name ?? p.title ?? "পণ্য";
-}
-
-function getPrice(p: Product): number | null {
-  const raw =
-    p.currentPrice ??
-    p.current_price ??
-    p.todayPrice ??
-    p.today_price ??
-    p.price;
-
-  if (raw === undefined || raw === null || raw === "") return null;
-
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : null;
-}
-
-function getChange(p: Product): number | null {
-  const raw =
-    p.changePercent ??
-    p.change_percent ??
-    p.priceChange ??
-    p.price_change ??
-    p.change;
-
-  if (raw === undefined || raw === null || raw === "") return null;
-
-  const n = Number(raw);
-  return Number.isFinite(n) ? n : null;
-}
-
-function getUnit(p: Product) {
-  return p.unitBn ?? p.unit_bn ?? p.unit ?? "";
-}
-
-function getProductList(data: unknown): Product[] {
-  if (Array.isArray(data)) return data as Product[];
-
-  if (data && typeof data === "object") {
-    const obj = data as Record<string, unknown>;
-    if (Array.isArray(obj.products)) return obj.products as Product[];
-    if (Array.isArray(obj.data)) return obj.data as Product[];
-  }
-
-  return [];
 }
 
 function getDate() {
@@ -111,7 +72,95 @@ function getDate() {
   }).format(new Date());
 }
 
-/* Figma-style lentil illustration */
+function getProductList(data: unknown): Product[] {
+  if (Array.isArray(data)) {
+    return data as Product[];
+  }
+
+  if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+
+    if (Array.isArray(obj.products)) {
+      return obj.products as Product[];
+    }
+
+    if (Array.isArray(obj.data)) {
+      return obj.data as Product[];
+    }
+  }
+
+  return [];
+}
+
+function getProductName(product: Product) {
+  return (
+    product.nameBn ??
+    product.name_bn ??
+    product.name ??
+    product.title ??
+    "পণ্য"
+  );
+}
+
+function getProductPrice(product: Product): number | null {
+  const raw =
+    product.today ??
+    product.currentPrice ??
+    product.current_price ??
+    product.todayPrice ??
+    product.today_price ??
+    product.price;
+
+  if (raw === undefined || raw === null || raw === "") {
+    return null;
+  }
+
+  const price = Number(raw);
+  return Number.isFinite(price) ? price : null;
+}
+
+function getProductChange(product: Product): number | null {
+  const raw =
+    product.change?.pct ??
+    product.changePercent ??
+    product.change_percent ??
+    product.priceChange ??
+    product.price_change;
+
+  if (raw === undefined || raw === null || raw === "") {
+    return null;
+  }
+
+  const change = Number(raw);
+  return Number.isFinite(change) ? change : null;
+}
+
+function getProductDirection(product: Product) {
+  if (product.change?.dir) {
+    return product.change.dir;
+  }
+
+  const change = getProductChange(product);
+
+  if (change === null || change === 0) return "flat";
+  return change > 0 ? "up" : "down";
+}
+
+function getProductUnit(product: Product) {
+  const raw = product.unitBn ?? product.unit_bn ?? product.unit ?? "";
+
+  const unitLabels: Record<string, string> = {
+    kg: "কেজি",
+    litre: "লিটার",
+    liter: "লিটার",
+    dozen: "ডজন",
+    piece: "পিস",
+  };
+
+  return unitLabels[raw.toLowerCase()] ?? raw;
+}
+
+/* Lentil icon */
 function DalIcon() {
   return (
     <svg
@@ -156,7 +205,7 @@ function DalIcon() {
   );
 }
 
-/* Figma-style green leafy vegetable illustration */
+/* Leafy vegetable icon */
 function VegetableIcon() {
   return (
     <svg
@@ -201,7 +250,13 @@ function VegetableIcon() {
   );
 }
 
-function CategoryIcon({ slug, icon }: { slug: string; icon: string }) {
+function CategoryIcon({
+  slug,
+  icon,
+}: {
+  slug: string;
+  icon: string;
+}) {
   if (slug === "dal") return <DalIcon />;
   if (slug === "sobji") return <VegetableIcon />;
 
@@ -213,12 +268,6 @@ function CategoryIcon({ slug, icon }: { slug: string; icon: string }) {
 }
 
 function ProductIcon({ product }: { product: Product }) {
-  if (product.emoji) return <span>{product.emoji}</span>;
-
-  if (product.icon && product.icon !== "dal" && product.icon !== "sobji") {
-    return <span>{product.icon}</span>;
-  }
-
   const slug =
     typeof product.category === "string"
       ? product.category
@@ -227,9 +276,17 @@ function ProductIcon({ product }: { product: Product }) {
   if (slug === "dal") return <DalIcon />;
   if (slug === "sobji") return <VegetableIcon />;
 
+  const icon =
+    product.image ??
+    product.categoryIcon ??
+    product.emoji ??
+    product.icon ??
+    categories.find((category) => category.slug === slug)?.icon ??
+    "🛒";
+
   return (
-    <span>
-      {categories.find((c) => c.slug === slug)?.icon ?? "🛒"}
+    <span className="shrink-0 text-base" aria-hidden="true">
+      {icon}
     </span>
   );
 }
@@ -257,17 +314,25 @@ export default function Navbar() {
           response = await fetch(`${FALLBACK_API}/products`);
         }
 
-        if (!response.ok) throw new Error("Product API failed");
+        if (!response.ok) {
+          throw new Error(`Product API failed: ${response.status}`);
+        }
 
         const data: unknown = await response.json();
 
-        if (!cancelled) setProducts(getProductList(data));
+        if (!cancelled) {
+          setProducts(getProductList(data));
+        }
       } catch (error) {
         console.error("BazarDor API error:", error);
 
-        if (!cancelled) setProducts([]);
+        if (!cancelled) {
+          setProducts([]);
+        }
       } finally {
-        if (!cancelled) setLoadingPrices(false);
+        if (!cancelled) {
+          setLoadingPrices(false);
+        }
       }
     }
 
@@ -376,6 +441,7 @@ export default function Navbar() {
               >
                 সাইন ইন
               </Link>
+
               <Link
                 href="/signup"
                 className="rounded-lg border border-[#078a45] px-3 py-2 text-xs font-semibold text-[#08783e] hover:bg-green-50 sm:px-4 sm:text-sm"
@@ -407,7 +473,10 @@ export default function Navbar() {
                     : "text-[#303a32] hover:bg-[#eef5ef]"
                 }`}
               >
-                <CategoryIcon slug={category.slug} icon={category.icon} />
+                <CategoryIcon
+                  slug={category.slug}
+                  icon={category.icon}
+                />
                 <span>{category.nameBn}</span>
               </Link>
             );
@@ -415,8 +484,8 @@ export default function Navbar() {
         </nav>
       </div>
 
-      {/* API price ticker */}
-      <div className="overflow-hidden border-t border-[#e6ece5] bg-[#f2f6f0]">
+      {/* Figma-style API price ticker */}
+      <div className="overflow-hidden border-y border-dotted border-blue-400 bg-white">
         {loadingPrices ? (
           <div className="px-4 py-2.5 text-xs text-gray-500">
             বাজারের দামের তথ্য লোড হচ্ছে...
@@ -434,51 +503,16 @@ export default function Navbar() {
                 className="flex shrink-0 items-center"
               >
                 {products.map((product, index) => {
-                  const rawPrice =
-                    product.currentPrice ??
-                    product.current_price ??
-                    product.todayPrice ??
-                    product.today_price ??
-                    product.price;
-
-                  const price =
-                    rawPrice === undefined ||
-                    rawPrice === null ||
-                    rawPrice === ""
-                      ? null
-                      : Number(rawPrice);
-
-                  const rawChange =
-                    product.changePercent ??
-                    product.change_percent ??
-                    product.priceChange ??
-                    product.price_change ??
-                    product.change;
-
-                  const change =
-                    rawChange === undefined ||
-                    rawChange === null ||
-                    rawChange === ""
-                      ? null
-                      : Number(rawChange);
-
-                  const name =
-                    product.nameBn ??
-                    product.name_bn ??
-                    product.name ??
-                    product.title ??
-                    "পণ্য";
-
-                  const unit =
-                    product.unitBn ??
-                    product.unit_bn ??
-                    product.unit ??
-                    "";
+                  const price = getProductPrice(product);
+                  const change = getProductChange(product);
+                  const direction = getProductDirection(product);
+                  const name = getProductName(product);
+                  const unit = getProductUnit(product);
 
                   return (
                     <div
                       key={`${copy}-${product.id ?? product.slug ?? index}`}
-                      className="flex items-center gap-2 whitespace-nowrap border-r border-[#e0e8de] px-4 py-2.5 text-xs sm:text-sm"
+                      className="flex shrink-0 items-center gap-2 whitespace-nowrap border-r border-[#e0e8de] px-4 py-2.5 text-xs sm:text-sm"
                     >
                       <ProductIcon product={product} />
 
@@ -487,22 +521,26 @@ export default function Navbar() {
                       </span>
 
                       <span className="text-gray-600">
-                        {price === null || !Number.isFinite(price)
+                        {price === null
                           ? "দাম পাওয়া যায়নি"
-                          : `${new Intl.NumberFormat("bn-BD").format(price)} টাকা${unit ? `/${unit}` : ""}`}
+                          : `${bn(price)} টাকা${unit ? `/${unit}` : ""}`}
                       </span>
 
-                      {change !== null && Number.isFinite(change) && (
+                      {change !== null && (
                         <span
                           className={`font-bold ${
-                            change > 0
+                            direction === "up"
                               ? "text-red-600"
-                              : change < 0
+                              : direction === "down"
                                 ? "text-green-700"
                                 : "text-gray-500"
                           }`}
                         >
-                          {change > 0 ? "▲" : change < 0 ? "▼" : "—"}{" "}
+                          {direction === "up"
+                            ? "▲"
+                            : direction === "down"
+                              ? "▼"
+                              : "—"}{" "}
                           {bn(Math.abs(change))}%
                         </span>
                       )}
@@ -528,6 +566,7 @@ export default function Navbar() {
           from {
             transform: translateX(0);
           }
+
           to {
             transform: translateX(-50%);
           }
