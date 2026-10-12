@@ -2,6 +2,7 @@
 import Navbar from "@/components/navbar/Navbar";
 import Banner from "@/components/Banner";
 import PriceSections from "@/components/PriceSections";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
@@ -11,6 +12,8 @@ export default function Home() {
         <Banner />
         <PriceSections />
       </main>
+      <Footer />
     </>
   );
 }
+

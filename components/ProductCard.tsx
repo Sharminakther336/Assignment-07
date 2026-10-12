@@ -1,4 +1,5 @@
-﻿"use client";
+﻿
+"use client";
 
 import type { Product } from "@/data/products";
 
@@ -31,22 +32,26 @@ function getProductIcon(product: Product): string {
   const key = `${slug} ${name}`;
 
   const icons: [string[], string][] = [
-    [["dherosh", "ঢেঁড়স", "ঢেঁড়স", "okra"], "🫛"],
+    [["dherosh", "ঢেঁড়স", "ঢেঁড়স", "okra"], "🟢",],
     [["ada", "ginger", "আদা"], "🫚"],
-    [["kaccha-moric", "kacha-morich", "কাঁচামরিচ"], "🌶️"],
+    [["kacha-morich", "kaccha-morich", "কাঁচামরিচ"], "🌶️"],
     [["morich", "chili", "chilli", "মরিচ"], "🌶️"],
     [["roshun", "garlic", "রসুন"], "🧄"],
     [["peyaj", "onion", "পেঁয়াজ", "পেঁয়াজ"], "🧅"],
     [["begun", "eggplant", "বেগুন"], "🍆"],
     [["alu", "potato", "আলু"], "🥔"],
     [["chal", "rice", "চাল"], "🍚"],
-    [["mosur", "masoor", "dal", "ডাল", "ছোলা"], "🫘"],
-    [["tel", "oil", "তেল"], "🫙"],
+    [["mosur", "masoor", "মসুর"], "🫘"],
+    [["mug", "mung", "মুগ"], ""],
+    [["chola", "chhola", "ছোলা"], "🫘"],
+    [["dal", "ডাল"], "dal"],
+    [["shorisha", "mustard", "সরিষা"], "🛢️"],
+    [["palm", "পাম"], "🛢️"],
+    [["tel", "oil", "তেল"], "🛢️"],
     [["mach", "fish", "মাছ"], "🐟"],
     [["dim", "egg", "ডিম"], "🥚"],
     [["dudh", "milk", "দুধ"], "🥛"],
     [["doi", "yogurt", "দই"], "🥣"],
-    [["mokhhan", "butter", "মাখন"], "🧈"],
     [["mangsho", "meat", "মাংস"], "🥩"],
     [["chicken", "মুরগি"], "🍗"],
     [["tomato", "টমেটো"], "🍅"],
@@ -56,7 +61,7 @@ function getProductIcon(product: Product): string {
     [["shosha", "cucumber", "শসা"], "🥒"],
     [["lobon", "salt", "লবণ"], "🧂"],
     [["chini", "sugar", "চিনি"], "🍚"],
-    [["dhanepata", "ধনেপাতা"], "🌿"],
+    [["dhanepata", "ধনেপাতা"], "🍃"],
   ];
 
   const matched = icons.find(([words]) =>
@@ -111,19 +116,41 @@ export default function ProductCard({
 
   const productName = String(product.nameBn ?? "পণ্য");
   const icon = getProductIcon(product);
+  const imageUrl = String(product.image ?? "").trim();
+
+  const isRemoteImage = /^https?:\/\//i.test(imageUrl);
+  const isLocalImage = imageUrl.startsWith("/");
+  const hasImage = isRemoteImage || isLocalImage;
 
   return (
     <article className="relative flex min-h-[120px] items-start gap-3 rounded-[13px] border border-[#e1e9e0] bg-[#fbfdfb] p-3 transition-shadow hover:shadow-md">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f0f5ef]">
-        {/^(https?:\/\/|\/)/i.test(String(product.image ?? "")) ? (
-          <img
-            src={String(product.image)}
-            alt={productName}
-            className="h-10 w-10 object-contain"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
-          />
+        {hasImage ? (
+          <>
+            <img
+              src={imageUrl}
+              alt={productName}
+              className="h-10 w-10 object-contain"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+                const fallback =
+                  event.currentTarget.nextElementSibling as HTMLElement | null;
+
+                if (fallback) {
+                  fallback.style.display = "flex";
+                }
+              }}
+            />
+
+            <span
+              className="h-full w-full items-center justify-center text-[30px] leading-none"
+              role="img"
+              aria-label={productName}
+              style={{ display: "none" }}
+            >
+              {icon}
+            </span>
+          </>
         ) : (
           <span
             className="flex h-full w-full items-center justify-center text-[30px] leading-none"
@@ -144,9 +171,7 @@ export default function ProductCard({
           প্রতি {getUnit(String(product.unit ?? "কেজি"))}
         </p>
 
-        <p className="mt-2 text-xs text-[#626b63]">
-          আজকের দাম
-        </p>
+        <p className="mt-2 text-xs text-[#626b63]">আজকের দাম</p>
 
         <p className="text-sm font-extrabold text-[#202a22]">
           ৳{formatNumber(today)}
