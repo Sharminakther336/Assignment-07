@@ -4,6 +4,7 @@ export type Product = {
   slug: string;
   nameBn: string;
   image: string;
+  categoryIcon?: string;
   unit: string;
   today: number;
   yesterday: number;

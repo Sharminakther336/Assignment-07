@@ -1,6 +1,5 @@
 ﻿import type { Metadata } from "next";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "বাজার দর | BazarDor",
@@ -14,10 +13,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="bn">
-      <body>
-        {children}
-        <Toaster position="top-right" />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
+
